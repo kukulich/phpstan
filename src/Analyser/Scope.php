@@ -798,7 +798,7 @@ class Scope
 			return $this->getClassReflection()->getName();
 		} elseif ($originalClass === 'parent' && $this->isInClass()) {
 			$currentClassReflection = $this->getClassReflection();
-			if ($currentClassReflection->getParentClass() !== false) {
+			if ($currentClassReflection->getParentClass() !== null) {
 				return $currentClassReflection->getParentClass()->getName();
 			}
 		}
@@ -1137,7 +1137,7 @@ class Scope
 			} elseif (
 				$className === 'parent'
 			) {
-				if ($this->isInClass() && $this->getClassReflection()->getParentClass() !== false) {
+				if ($this->isInClass() && $this->getClassReflection()->getParentClass() !== null) {
 					return new ObjectType($this->getClassReflection()->getParentClass()->getName());
 				}
 

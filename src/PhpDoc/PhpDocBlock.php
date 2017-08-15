@@ -86,7 +86,7 @@ class PhpDocBlock
 			&& $broker->hasClass($class)
 		) {
 			$classReflection = $broker->getClass($class);
-			if ($classReflection->getParentClass() !== false) {
+			if ($classReflection->getParentClass() !== null) {
 				$parentClassReflection = $classReflection->getParentClass();
 				$phpDocBlockFromClass = self::resolvePhpDocBlockFromClass(
 					$broker,
@@ -139,7 +139,7 @@ class PhpDocBlock
 	{
 		if (!$classReflection->isInternal() && $classReflection->$hasMethodName($name)) {
 			$parentMethodReflection = $classReflection->$getMethodName($name);
-			if ($parentMethodReflection->getDocComment() !== false) {
+			if ($parentMethodReflection->getDocComment() !== '') {
 				return self::$resolveMethodName(
 					$broker,
 					$parentMethodReflection->getDocComment(),

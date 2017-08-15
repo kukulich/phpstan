@@ -26,6 +26,16 @@ class AnalyseCommand extends \Symfony\Component\Console\Command\Command
 
 	const DEFAULT_LEVEL = 0;
 
+	/** @var \Composer\Autoload\ClassLoader */
+	private $composerClassLoader;
+
+	public function __construct(\Composer\Autoload\ClassLoader $composerClassLoader)
+	{
+		parent::__construct();
+
+		$this->composerClassLoader = $composerClassLoader;
+	}
+
 	protected function configure()
 	{
 		$this->setName(self::NAME)
@@ -141,7 +151,9 @@ class AnalyseCommand extends \Symfony\Component\Console\Command\Command
 		$parameters['tmpDir'] = $tmpDir;
 
 		$configurator->addParameters($parameters);
+		$configurator->addServices(['composerClassLoader' => $this->composerClassLoader]);
 		$container = $configurator->createContainer();
+
 		$memoryLimitFile = $container->parameters['memoryLimitFile'];
 		if (file_exists($memoryLimitFile)) {
 			$consoleStyle->note(sprintf(
@@ -221,6 +233,7 @@ class AnalyseCommand extends \Symfony\Component\Console\Command\Command
 
 	private function handleReturn(int $code, string $memoryLimitFile): int
 	{
+		printf('%d MB', memory_get_peak_usage() / 1024 / 1024);
 		unlink($memoryLimitFile);
 		return $code;
 	}

@@ -47,6 +47,7 @@ services:
 			ignoreErrors: %ignoreErrors%
 			reportUnmatchedIgnoredErrors: %reportUnmatchedIgnoredErrors%
 			bootstrapFile: %bootstrap%
+			composerClassLoader: @composerClassLoader
 
 	-
 		class: PHPStan\Analyser\NodeScopeResolver
@@ -158,6 +159,10 @@ services:
 		arguments:
 			directory: %tmpDir%/cache/PHPStan
 		autowired: no
+
+	composerClassLoader:
+		class: Composer\Autoload\ClassLoader
+		dynamic: true
 
 	directParser:
 		class: PHPStan\Parser\DirectParser

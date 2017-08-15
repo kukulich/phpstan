@@ -71,7 +71,7 @@ class AccessPropertiesRule implements \PHPStan\Rules\Rule
 				$referencedClass = $typeResult->getReferencedClasses()[0];
 				$propertyClassReflection = $this->broker->getClass($referencedClass);
 				$parentClassReflection = $propertyClassReflection->getParentClass();
-				while ($parentClassReflection !== false) {
+				while ($parentClassReflection !== null) {
 					if ($parentClassReflection->hasExtendedProperty($name)) {
 						return [
 							sprintf(

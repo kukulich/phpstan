@@ -8,12 +8,12 @@ class ClassConstantWithVisibilityReflection implements ClassConstantReflection
 	/** @var \PHPStan\Reflection\ClassReflection */
 	private $declaringClass;
 
-	/** @var \ReflectionClassConstant */
+	/** @var \Roave\BetterReflection\Reflection\ReflectionClassConstant */
 	private $reflection;
 
 	public function __construct(
 		ClassReflection $declaringClass,
-		\ReflectionClassConstant $reflection
+		\Roave\BetterReflection\Reflection\ReflectionClassConstant $reflection
 	)
 	{
 		$this->declaringClass = $declaringClass;

@@ -7,8 +7,14 @@ use PHPStan\Type\Type;
 interface FunctionReflectionFactory
 {
 
+	/**
+	 * @param \Roave\BetterReflection\Reflection\ReflectionFunction|\ReflectionFunction $reflection
+	 * @param array $phpDocParameterTypes
+	 * @param \PHPStan\Type\Type|null $phpDocReturnType
+	 * @return \PHPStan\Reflection\FunctionReflection
+	 */
 	public function create(
-		\ReflectionFunction $reflection,
+		$reflection,
 		array $phpDocParameterTypes,
 		Type $phpDocReturnType = null
 	): FunctionReflection;

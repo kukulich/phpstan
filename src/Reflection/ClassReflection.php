@@ -20,11 +20,11 @@ class ClassReflection
 	/** @var string */
 	private $displayName;
 
-	/** @var \ReflectionClass */
+	/** @var \Roave\BetterReflection\Reflection\ReflectionClass */
 	private $reflection;
 
 	/** @var \PHPStan\Reflection\ClassReflection|false|null */
-	private $parentClass;
+	private $parentClass = false;
 
 	/** @var \PHPStan\Reflection\MethodReflection[] */
 	private $methods = [];
@@ -40,7 +40,7 @@ class ClassReflection
 		array $propertiesClassReflectionExtensions,
 		array $methodsClassReflectionExtensions,
 		string $displayName,
-		\ReflectionClass $reflection
+		\Roave\BetterReflection\Reflection\ReflectionClass $reflection
 	)
 	{
 		$this->broker = $broker;
@@ -51,13 +51,13 @@ class ClassReflection
 	}
 
 	/**
-	 * @return false|\PHPStan\Reflection\ClassReflection
+	 * @return \PHPStan\Reflection\ClassReflection|null
 	 */
 	public function getParentClass()
 	{
-		if ($this->parentClass === null) {
+		if ($this->parentClass === false) {
 			$parentReflection = $this->reflection->getParentClass();
-			$this->parentClass = $parentReflection !== false ? $this->broker->getClass($parentReflection->getName()) : false;
+			$this->parentClass = $parentReflection !== null ? $this->broker->getClass($parentReflection->getName()) : null;
 		}
 
 		return $this->parentClass;
@@ -130,13 +130,13 @@ class ClassReflection
 		return $this->methods[$key];
 	}
 
-	public function getMethod(string $methodName): \ReflectionMethod
+	public function getMethod(string $methodName): \Roave\BetterReflection\Reflection\ReflectionMethod
 	{
 		return $this->reflection->getMethod($methodName);
 	}
 
 	/**
-	 * @return \ReflectionMethod[]
+	 * @return \Roave\BetterReflection\Reflection\ReflectionMethod[]
 	 */
 	public function getMethods(): array
 	{
@@ -168,13 +168,15 @@ class ClassReflection
 		return $this->properties[$key];
 	}
 
-	public function getProperty(string $propertyName): \ReflectionProperty
+	public function getProperty(string $propertyName): \Roave\BetterReflection\Reflection\ReflectionProperty
 	{
-		return $this->reflection->getProperty($propertyName);
+		/** @var \Roave\BetterReflection\Reflection\ReflectionProperty $property */
+		$property = $this->reflection->getProperty($propertyName);
+		return $property;
 	}
 
 	/**
-	 * @return \ReflectionProperty[]
+	 * @return \Roave\BetterReflection\Reflection\ReflectionProperty[]
 	 */
 	public function getProperties(): array
 	{
@@ -213,7 +215,7 @@ class ClassReflection
 
 	public function isSubclassOf(string $className): bool
 	{
-		return $this->reflection->isSubclassOf($className);
+		return $this->reflection->isSubclassOf($className) || $this->reflection->implementsInterface($className);
 	}
 
 	/**
@@ -223,7 +225,7 @@ class ClassReflection
 	{
 		$parents = [];
 		$parent = $this->getParentClass();
-		while ($parent !== false) {
+		while ($parent !== null) {
 			$parents[] = $parent;
 			$parent = $parent->getParentClass();
 		}
@@ -236,7 +238,7 @@ class ClassReflection
 	 */
 	public function getInterfaces(): array
 	{
-		return array_map(function (\ReflectionClass $interface) {
+		return array_map(function (\Roave\BetterReflection\Reflection\ReflectionClass $interface) {
 			return $this->broker->getClass($interface->getName());
 		}, $this->reflection->getInterfaces());
 	}
@@ -246,7 +248,7 @@ class ClassReflection
 	 */
 	public function getTraits(): array
 	{
-		return array_map(function (\ReflectionClass $trait) {
+		return array_map(function (\Roave\BetterReflection\Reflection\ReflectionClass $trait) {
 			return $this->broker->getClass($trait->getName());
 		}, $this->reflection->getTraits());
 	}
@@ -258,7 +260,7 @@ class ClassReflection
 	{
 		$parentNames = [];
 		$currentClassReflection = $this;
-		while ($currentClassReflection->getParentClass() !== false) {
+		while ($currentClassReflection->getParentClass() !== null) {
 			$parentNames[] = $currentClassReflection->getParentClass()->getName();
 			$currentClassReflection = $currentClassReflection->getParentClass();
 		}
@@ -281,6 +283,7 @@ class ClassReflection
 					$this->reflection->getConstant($name)
 				);
 			} else {
+				/** @var \Roave\BetterReflection\Reflection\ReflectionClassConstant $reflectionConstant */
 				$reflectionConstant = $this->reflection->getReflectionConstant($name);
 				$this->constants[$name] = new ClassConstantWithVisibilityReflection(
 					$this->broker->getClass($reflectionConstant->getDeclaringClass()->getName()),
@@ -301,7 +304,7 @@ class ClassReflection
 		$traitNames = $this->reflection->getTraitNames();
 
 		$parentClass = $this->reflection->getParentClass();
-		while ($parentClass !== false) {
+		while ($parentClass !== null) {
 			$traitNames = array_merge($traitNames, $parentClass->getTraitNames());
 			$parentClass = $parentClass->getParentClass();
 		}
@@ -335,7 +338,7 @@ class ClassReflection
 	 */
 	public function getFileName()
 	{
-		return $this->reflection->getFileName() ?: null;
+		return $this->reflection->getFileName();
 	}
 
 	/**
@@ -343,7 +346,7 @@ class ClassReflection
 	 */
 	public function getDocComment()
 	{
-		return $this->reflection->getDocComment() ?: null;
+		return $this->reflection->getDocComment();
 	}
 
 }

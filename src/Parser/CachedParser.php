@@ -2,6 +2,8 @@
 
 namespace PHPStan\Parser;
 
+use PhpParser\ErrorHandler;
+
 class CachedParser implements Parser
 {
 
@@ -30,5 +32,4 @@ class CachedParser implements Parser
 
 		return $this->cachedNodesByString[$sourceCode];
 	}
-
 }

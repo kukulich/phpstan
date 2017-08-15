@@ -95,7 +95,7 @@ abstract class TestCase extends \PHPUnit\Framework\TestCase
 
 			public function create(
 				ClassReflection $declaringClass,
-				\ReflectionMethod $reflection,
+				\Roave\BetterReflection\Reflection\ReflectionMethod $reflection,
 				array $phpDocParameterTypes,
 				Type $phpDocReturnType = null
 			): PhpMethodReflection

@@ -76,7 +76,7 @@ class CallMethodsRule implements \PHPStan\Rules\Rule
 				$referencedClass = $typeResult->getReferencedClasses()[0];
 				$methodClassReflection = $this->broker->getClass($referencedClass);
 				$parentClassReflection = $methodClassReflection->getParentClass();
-				while ($parentClassReflection !== false) {
+				while ($parentClassReflection !== null) {
 					if ($parentClassReflection->hasExtendedMethod($name)) {
 						return [
 							sprintf(

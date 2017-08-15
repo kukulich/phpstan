@@ -529,29 +529,7 @@ class NodeScopeResolver
 			}
 			$scope = $scope->enterFunctionCall($node);
 		} elseif ($node instanceof New_ && $node->class instanceof Class_) {
-			$node->args = [];
-			foreach ($node->class->stmts as $i => $statement) {
-				if (
-					$statement instanceof Node\Stmt\ClassMethod
-					&& $statement->name === '__construct'
-				) {
-					unset($node->class->stmts[$i]);
-					$node->class->stmts = array_values($node->class->stmts);
-					break;
-				}
-			}
-
-			$node->class->stmts[] = $this->builderFactory
-				->method('__construct')
-				->makePublic()
-				->getNode();
-
-			$code = $this->printer->prettyPrint([$node]);
-			$classReflection = new \ReflectionClass(eval(sprintf('return %s', $code)));
-			$this->anonymousClassReflection = $this->broker->getClassFromReflection(
-				$classReflection,
-				sprintf('class@anonymous%s:%s', $scope->getFile(), $node->getLine())
-			);
+			$this->anonymousClassReflection = $this->broker->getAnonymousClass($node->class, $scope->getFile());
 		} elseif ($node instanceof BooleanNot) {
 			$scope = $scope->enterNegation();
 		} elseif ($node instanceof Unset_ || $node instanceof Isset_) {

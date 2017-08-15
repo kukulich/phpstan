@@ -39,7 +39,7 @@ class TypehintHelper
 				$broker = Broker::getInstance();
 				if ($broker->hasClass($selfClass)) {
 					$classReflection = $broker->getClass($selfClass);
-					if ($classReflection->getParentClass() !== false) {
+					if ($classReflection->getParentClass() !== null) {
 						return new ObjectType($classReflection->getParentClass()->getName());
 					}
 				}
@@ -95,8 +95,15 @@ class TypehintHelper
 		}
 	}
 
+	/**
+	 * @param \Roave\BetterReflection\Reflection\ReflectionType|\ReflectionType|null $reflectionType
+	 * @param \PHPStan\Type\Type|null $phpDocType
+	 * @param string|null $selfClass
+	 * @param bool $isVariadic
+	 * @return \PHPStan\Type\Type
+	 */
 	public static function decideTypeFromReflection(
-		\ReflectionType $reflectionType = null,
+		$reflectionType = null,
 		Type $phpDocType = null,
 		string $selfClass = null,
 		bool $isVariadic = false

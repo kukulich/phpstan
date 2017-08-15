@@ -26,7 +26,7 @@ class PhpMethodReflection implements MethodReflection
 	/** @var \PHPStan\Reflection\ClassReflection */
 	private $declaringClass;
 
-	/** @var \ReflectionMethod */
+	/** @var \Roave\BetterReflection\Reflection\ReflectionMethod */
 	private $reflection;
 
 	/** @var \PHPStan\Broker\Broker */
@@ -55,7 +55,7 @@ class PhpMethodReflection implements MethodReflection
 
 	public function __construct(
 		ClassReflection $declaringClass,
-		\ReflectionMethod $reflection,
+		\Roave\BetterReflection\Reflection\ReflectionMethod $reflection,
 		Broker $broker,
 		Parser $parser,
 		FunctionCallStatementFinder $functionCallStatementFinder,
@@ -152,7 +152,7 @@ class PhpMethodReflection implements MethodReflection
 	public function getParameters(): array
 	{
 		if ($this->parameters === null) {
-			$this->parameters = array_map(function (\ReflectionParameter $reflection) {
+			$this->parameters = array_map(function (\Roave\BetterReflection\Reflection\ReflectionParameter $reflection) {
 				return new PhpParameterReflection(
 					$reflection,
 					isset($this->phpDocParameterTypes[$reflection->getName()]) ? $this->phpDocParameterTypes[$reflection->getName()] : null

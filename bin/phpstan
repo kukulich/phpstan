@@ -5,19 +5,20 @@ use PHPStan\Command\AnalyseCommand;
 
 gc_disable(); // performance boost
 
-$autoloaderInWorkingDirectory = getcwd() . '/vendor/autoload.php';
-if (is_file($autoloaderInWorkingDirectory)) {
-	require_once $autoloaderInWorkingDirectory;
-}
-
-if (!class_exists('PHPStan\Command\AnalyseCommand', true)) {
+$composerAutoloadFile = getcwd() . '/vendor/autoload.php';
+if (!is_file($composerAutoloadFile)) {
 	$composerAutoloadFile = __DIR__ . '/../vendor/autoload.php';
 	if (!is_file($composerAutoloadFile)) {
 		$composerAutoloadFile = __DIR__ . '/../../../autoload.php';
 	}
-
-	require_once $composerAutoloadFile;
 }
+
+if (!is_file($composerAutoloadFile)) {
+	// Todo
+}
+
+$composerClassLoader = require_once $composerAutoloadFile;
+$composerClassLoader->addClassMap([\Composer\Autoload\ClassLoader::class => dirname($composerAutoloadFile) . '/composer/ClassLoader.php']);
 
 $version = 'Version unknown';
 try {
@@ -31,5 +32,5 @@ $application = new \Symfony\Component\Console\Application(
 	$version
 );
 $application->setCatchExceptions(false);
-$application->add(new AnalyseCommand());
+$application->add(new AnalyseCommand($composerClassLoader));
 $application->run();

@@ -46,7 +46,7 @@ class RequireParentConstructCallRule implements \PHPStan\Rules\Rule
 		}
 
 		if ($this->callsParentConstruct($node)) {
-			if ($classReflection->getParentClass() === false) {
+			if ($classReflection->getParentClass() === null) {
 				return [
 					sprintf(
 						'%s::__construct() calls parent constructor but does not extend any class.',
@@ -112,7 +112,7 @@ class RequireParentConstructCallRule implements \PHPStan\Rules\Rule
 	private function getParentConstructorClass(ClassReflection $classReflection)
 	{
 		$parentClass = $classReflection->getParentClass();
-		while ($parentClass !== false) {
+		while ($parentClass !== null) {
 			$constructor = $parentClass->hasMethod('__construct') ? $parentClass->getMethod('__construct') : null;
 			if ($constructor !== null && !$constructor->isAbstract()) {
 				return $this->broker->getClass($constructor->getDeclaringClass()->getName());

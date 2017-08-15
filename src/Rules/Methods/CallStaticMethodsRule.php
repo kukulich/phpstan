@@ -85,7 +85,7 @@ class CallStaticMethodsRule implements \PHPStan\Rules\Rule
 					];
 				}
 				$currentClassReflection = $scope->getClassReflection();
-				if ($currentClassReflection->getParentClass() === false) {
+				if ($currentClassReflection->getParentClass() === null) {
 					return [
 						sprintf(
 							'%s::%s() calls parent::%s() but %s does not extend any class.',

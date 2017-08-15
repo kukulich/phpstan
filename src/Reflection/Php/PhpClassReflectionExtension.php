@@ -70,8 +70,8 @@ class PhpClassReflectionExtension
 		$properties = [];
 		foreach ($classReflection->getProperties() as $propertyReflection) {
 			$propertyName = $propertyReflection->getName();
-			$declaringClassReflection = $this->broker->getClass($propertyReflection->getDeclaringClass()->getName());
-			if ($propertyReflection->getDocComment() === false) {
+			$declaringClassReflection = $this->broker->getClass($propertyReflection->getImplementingClass()->getName());
+			if ($propertyReflection->getDocComment() === '') {
 				$type = new MixedType();
 			} elseif (!$declaringClassReflection->isAnonymous() && !$declaringClassReflection->isInternal()) {
 				/** @var string $fileName */
@@ -183,12 +183,12 @@ class PhpClassReflectionExtension
 			}
 		}
 		foreach ($reflectionMethods as $methodReflection) {
-			$declaringClass = $this->broker->getClass($methodReflection->getDeclaringClass()->getName());
+			$declaringClass = $this->broker->getClass($methodReflection->getImplementingClass()->getName());
 
 			$phpDocParameterTypes = [];
 			$phpDocReturnType = null;
 			if (!$declaringClass->isAnonymous() && !$declaringClass->isInternal()) {
-				if ($methodReflection->getDocComment() !== false) {
+				if ($methodReflection->getDocComment() !== '') {
 					/** @var string $fileName */
 					$fileName = $declaringClass->getFileName();
 					$phpDocBlock = PhpDocBlock::resolvePhpDocBlockForMethod(
@@ -201,7 +201,7 @@ class PhpClassReflectionExtension
 					$typeMap = $this->fileTypeMapper->getTypeMap($phpDocBlock->getFile());
 					$phpDocParameterTypes = TypehintHelper::getParameterTypesFromPhpDoc(
 						$typeMap,
-						array_map(function (\ReflectionParameter $parameterReflection): string {
+						array_map(function (\Roave\BetterReflection\Reflection\ReflectionParameter $parameterReflection): string {
 							return $parameterReflection->getName();
 						}, $methodReflection->getParameters()),
 						$phpDocBlock->getDocComment()

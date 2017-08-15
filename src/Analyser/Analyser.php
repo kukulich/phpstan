@@ -5,7 +5,10 @@ namespace PHPStan\Analyser;
 use PHPStan\Broker\Broker;
 use PHPStan\File\FileHelper;
 use PHPStan\Parser\Parser;
+use PHPStan\Reflection\SourceLocator;
 use PHPStan\Rules\Registry;
+use Roave\BetterReflection\Reflector\ClassReflector;
+use Roave\BetterReflection\Reflector\FunctionReflector;
 
 class Analyser
 {
@@ -55,6 +58,9 @@ class Analyser
 	 */
 	private $reportUnmatchedIgnoredErrors;
 
+	/** @var \Composer\Autoload\ClassLoader */
+	private $composerClassLoader;
+
 	/**
 	 * @param \PHPStan\Broker\Broker $broker
 	 * @param \PHPStan\Parser\Parser $parser
@@ -66,6 +72,7 @@ class Analyser
 	 * @param string[] $ignoreErrors
 	 * @param string|null $bootstrapFile
 	 * @param bool $reportUnmatchedIgnoredErrors
+	 * @param \Composer\Autoload\ClassLoader $composerClassLoader
 	 */
 	public function __construct(
 		Broker $broker,
@@ -77,7 +84,8 @@ class Analyser
 		FileHelper $fileHelper,
 		array $ignoreErrors,
 		string $bootstrapFile = null,
-		bool $reportUnmatchedIgnoredErrors
+		bool $reportUnmatchedIgnoredErrors,
+		\Composer\Autoload\ClassLoader $composerClassLoader
 	)
 	{
 		$this->broker = $broker;
@@ -89,6 +97,7 @@ class Analyser
 		$this->ignoreErrors = $ignoreErrors;
 		$this->bootstrapFile = $bootstrapFile !== null ? $fileHelper->normalizePath($bootstrapFile) : null;
 		$this->reportUnmatchedIgnoredErrors = $reportUnmatchedIgnoredErrors;
+		$this->composerClassLoader = $composerClassLoader;
 	}
 
 	/**
@@ -126,6 +135,12 @@ class Analyser
 			return $errors;
 		}
 
+		$sourceLocator = new SourceLocator($this->composerClassLoader, $files, $this->parser);
+		$classReflector = new ClassReflector($sourceLocator);
+		$functionReflector = new FunctionReflector($sourceLocator, $classReflector);
+
+		$this->broker->setClassReflector($classReflector);
+		$this->broker->setFunctionReflector($functionReflector);
 		$this->nodeScopeResolver->setAnalysedFiles($files);
 		foreach ($files as $file) {
 			try {

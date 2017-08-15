@@ -64,7 +64,7 @@ class InstantiationRule implements \PHPStan\Rules\Rule
 					sprintf('Using %s outside of class scope.', $class),
 				];
 			}
-			if ($scope->getClassReflection()->getParentClass() === false) {
+			if ($scope->getClassReflection()->getParentClass() === null) {
 				return [
 					sprintf(
 						'%s::%s() calls new parent but %s does not extend any class.',

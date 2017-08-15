@@ -20,7 +20,7 @@ use PHPStan\Type\TypehintHelper;
 class FunctionReflection implements ParametersAcceptor
 {
 
-	/** @var \ReflectionFunction */
+	/** @var \Roave\BetterReflection\Reflection\ReflectionFunction|\ReflectionFunction */
 	private $reflection;
 
 	/** @var \PHPStan\Parser\Parser */
@@ -44,8 +44,16 @@ class FunctionReflection implements ParametersAcceptor
 	/** @var \PHPStan\Type\Type */
 	private $returnType;
 
+	/**
+	 * @param \Roave\BetterReflection\Reflection\ReflectionFunction|\ReflectionFunction $reflection
+	 * @param \PHPStan\Parser\Parser $parser
+	 * @param \PHPStan\Parser\FunctionCallStatementFinder $functionCallStatementFinder
+	 * @param \PHPStan\Cache\Cache $cache
+	 * @param array $phpDocParameterTypes
+	 * @param \PHPStan\Type\Type|null $phpDocReturnType
+	 */
 	public function __construct(
-		\ReflectionFunction $reflection,
+		$reflection,
 		Parser $parser,
 		FunctionCallStatementFinder $functionCallStatementFinder,
 		Cache $cache,
@@ -72,7 +80,7 @@ class FunctionReflection implements ParametersAcceptor
 	public function getParameters(): array
 	{
 		if ($this->parameters === null) {
-			$this->parameters = array_map(function (\ReflectionParameter $reflection) {
+			$this->parameters = array_map(function ($reflection) {
 				return new PhpParameterReflection(
 					$reflection,
 					isset($this->phpDocParameterTypes[$reflection->getName()]) ? $this->phpDocParameterTypes[$reflection->getName()] : null
@@ -185,7 +193,7 @@ class FunctionReflection implements ParametersAcceptor
 	public function isVariadic(): bool
 	{
 		$isNativelyVariadic = $this->reflection->isVariadic();
-		if (!$isNativelyVariadic && $this->reflection->getFileName() !== false) {
+		if (!$isNativelyVariadic && !$this->reflection->isInternal()) {
 			$key = sprintf('variadic-function-%s-v0', $this->reflection->getName());
 			$cachedResult = $this->cache->load($key);
 			if ($cachedResult === null) {

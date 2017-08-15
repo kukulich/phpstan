@@ -15,13 +15,13 @@ class PhpPropertyReflection implements PropertyReflection
 	/** @var \PHPStan\Type\Type */
 	private $type;
 
-	/** @var \ReflectionProperty */
+	/** @var \Roave\BetterReflection\Reflection\ReflectionProperty */
 	private $reflection;
 
 	public function __construct(
 		ClassReflection $declaringClass,
 		Type $type,
-		\ReflectionProperty $reflection
+		\Roave\BetterReflection\Reflection\ReflectionProperty $reflection
 	)
 	{
 		$this->declaringClass = $declaringClass;

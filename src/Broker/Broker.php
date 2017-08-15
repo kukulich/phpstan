@@ -25,7 +25,7 @@ class Broker
 	/** @var \PHPStan\Type\DynamicStaticMethodReturnTypeExtension[] */
 	private $dynamicStaticMethodReturnTypeExtensions = [];
 
-	/** @var \PHPStan\Reflection\ClassReflection[] */
+	/** @var \PHPStan\Reflection\ClassReflection[]|null[] */
 	private $classReflections = [];
 
 	/** @var \PHPStan\Reflection\FunctionReflectionFactory */
@@ -40,8 +40,11 @@ class Broker
 	/** @var null|self */
 	private static $instance;
 
-	/** @var bool[] */
-	private $hasClassCache;
+	/** @var \Roave\BetterReflection\Reflector\ClassReflector|null */
+	private $classReflector;
+
+	/** @var \Roave\BetterReflection\Reflector\FunctionReflector|null */
+	private $functionReflector;
 
 	/**
 	 * @param \PHPStan\Reflection\PropertiesClassReflectionExtension[] $propertiesClassReflectionExtensions
@@ -88,6 +91,16 @@ class Broker
 		return self::$instance;
 	}
 
+	public function setClassReflector(\Roave\BetterReflection\Reflector\ClassReflector $classReflector)
+	{
+		$this->classReflector = $classReflector;
+	}
+
+	public function setFunctionReflector(\Roave\BetterReflection\Reflector\FunctionReflector $functionReflector)
+	{
+		$this->functionReflector = $functionReflector;
+	}
+
 	/**
 	 * @param string $className
 	 * @return \PHPStan\Type\DynamicMethodReturnTypeExtension[]
@@ -126,26 +139,61 @@ class Broker
 		return $extensionsForClass;
 	}
 
+	public function getAnonymousClass(\PhpParser\Node\Stmt\ClassLike $node, string $file): \PHPStan\Reflection\ClassReflection
+	{
+		/** @var \Roave\BetterReflection\Reflector\ClassReflector $classReflector */
+		$classReflector = $this->classReflector;
+		$reflectionClass = \Roave\BetterReflection\Reflection\ReflectionClass::createFromNode(
+			$classReflector,
+			$node,
+			new \Roave\BetterReflection\SourceLocator\Located\LocatedSource(file_get_contents($file), $file)
+		);
+
+		$className = $reflectionClass->getName();
+		/** @var \PHPStan\Reflection\ClassReflection $classReflection */
+		$classReflection = $this->getClassFromReflection($reflectionClass, $className);
+		$this->classReflections[$className] = $classReflection;
+		return $classReflection;
+	}
+
 	public function getClass(string $className): \PHPStan\Reflection\ClassReflection
 	{
-		if (!$this->hasClass($className)) {
+		$class = $this->findClass($className);
+		if ($class === null) {
 			throw new \PHPStan\Broker\ClassNotFoundException($className);
 		}
 
-		if (!isset($this->classReflections[$className])) {
-			$reflectionClass = new ReflectionClass($className);
-			$classReflection = $this->getClassFromReflection($reflectionClass, $reflectionClass->getName());
-			$this->classReflections[$className] = $classReflection;
-			if ($className !== $reflectionClass->getName()) {
-				// class alias optimization
-				$this->classReflections[$reflectionClass->getName()] = $classReflection;
+		return $class;
+	}
+
+	/**
+	 * @param string $className
+	 * @return \PHPStan\Reflection\ClassReflection|null
+	 */
+	private function findClass(string $className)
+	{
+		if (!array_key_exists($className, $this->classReflections)) {
+			try {
+				/** @var \Roave\BetterReflection\Reflector\ClassReflector $classReflector */
+				$classReflector = $this->classReflector;
+				/** @var \Roave\BetterReflection\Reflection\ReflectionClass $reflectionClass */
+				$reflectionClass = $classReflector->reflect($className);
+
+				$classReflection = $this->getClassFromReflection($reflectionClass, $reflectionClass->getName());
+				$this->classReflections[$className] = $classReflection;
+				if ($className !== $reflectionClass->getName()) {
+					// class alias optimization
+					$this->classReflections[$reflectionClass->getName()] = $classReflection;
+				}
+			} catch (\Roave\BetterReflection\Reflector\Exception\IdentifierNotFound $e) {
+				$this->classReflections[$className] = null;
 			}
 		}
 
 		return $this->classReflections[$className];
 	}
 
-	public function getClassFromReflection(\ReflectionClass $reflectionClass, string $displayName): \PHPStan\Reflection\ClassReflection
+	public function getClassFromReflection(\Roave\BetterReflection\Reflection\ReflectionClass $reflectionClass, string $displayName): \PHPStan\Reflection\ClassReflection
 	{
 		return new ClassReflection(
 			$this,
@@ -158,28 +206,7 @@ class Broker
 
 	public function hasClass(string $className): bool
 	{
-		if (isset($this->hasClassCache[$className])) {
-			return $this->hasClassCache[$className];
-		}
-
-		spl_autoload_register($autoloader = function (string $autoloadedClassName) use ($className) {
-			if ($autoloadedClassName !== $className) {
-				throw new \PHPStan\Broker\ClassAutoloadingException($autoloadedClassName);
-			}
-		});
-
-		try {
-			return $this->hasClassCache[$className] = class_exists($className) || interface_exists($className) || trait_exists($className);
-		} catch (\PHPStan\Broker\ClassAutoloadingException $e) {
-			throw $e;
-		} catch (\Throwable $t) {
-			throw new \PHPStan\Broker\ClassAutoloadingException(
-				$className,
-				$t
-			);
-		} finally {
-			spl_autoload_unregister($autoloader);
-		}
+		return $this->findClass($className) !== null;
 	}
 
 	public function getFunction(\PhpParser\Node\Name $nameNode, Scope $scope = null): \PHPStan\Reflection\FunctionReflection
@@ -191,21 +218,36 @@ class Broker
 
 		$lowerCasedFunctionName = strtolower($functionName);
 		if (!isset($this->functionReflections[$lowerCasedFunctionName])) {
-			$reflectionFunction = new \ReflectionFunction($lowerCasedFunctionName);
+			/** @var \Roave\BetterReflection\Reflector\FunctionReflector $functionReflector */
+			$functionReflector = $this->functionReflector;
+
+			try {
+				// Try internal function first
+				$reflectionFunction = new \ReflectionFunction($lowerCasedFunctionName);
+				if ($reflectionFunction->isUserDefined()) {
+					/** @var \Roave\BetterReflection\Reflection\ReflectionFunction $reflectionFunction */
+					$reflectionFunction = $functionReflector->reflect($functionName);
+				}
+			} catch (\ReflectionException $e) {
+				/** @var \Roave\BetterReflection\Reflection\ReflectionFunction $reflectionFunction */
+				$reflectionFunction = $functionReflector->reflect($functionName);
+			}
+
 			$phpDocParameterTypes = [];
 			$phpDocReturnType = null;
-			if ($reflectionFunction->getFileName() !== false && $reflectionFunction->getDocComment() !== false) {
+			if (!$reflectionFunction->isInternal() && $reflectionFunction->getDocComment() !== '') {
 				$fileTypeMap = $this->fileTypeMapper->getTypeMap($reflectionFunction->getFileName());
 				$docComment = $reflectionFunction->getDocComment();
 				$phpDocParameterTypes = TypehintHelper::getParameterTypesFromPhpDoc(
 					$fileTypeMap,
-					array_map(function (\ReflectionParameter $parameter): string {
+					array_map(function (\Roave\BetterReflection\Reflection\ReflectionParameter $parameter): string {
 						return $parameter->getName();
 					}, $reflectionFunction->getParameters()),
 					$docComment
 				);
 				$phpDocReturnType = TypehintHelper::getReturnTypeFromPhpDoc($fileTypeMap, $docComment);
 			}
+
 			$this->functionReflections[$lowerCasedFunctionName] = $this->functionReflectionFactory->create(
 				$reflectionFunction,
 				$phpDocParameterTypes,

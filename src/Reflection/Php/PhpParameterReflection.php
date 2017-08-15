@@ -9,7 +9,7 @@ use PHPStan\Type\TypehintHelper;
 class PhpParameterReflection implements ParameterReflection
 {
 
-	/** @var \ReflectionParameter */
+	/** @var \Roave\BetterReflection\Reflection\ReflectionParameter|\ReflectionParameter */
 	private $reflection;
 
 	/** @var \PHPStan\Type\Type|null */
@@ -18,7 +18,7 @@ class PhpParameterReflection implements ParameterReflection
 	/** @var \PHPStan\Type\Type */
 	private $type;
 
-	public function __construct(\ReflectionParameter $reflection, Type $phpDocType = null)
+	public function __construct($reflection, Type $phpDocType = null)
 	{
 		$this->reflection = $reflection;
 		$this->phpDocType = $phpDocType;
