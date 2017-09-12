@@ -26,16 +26,46 @@ class AnnotationsMethodsClassReflectionExtension implements MethodsClassReflecti
 
 	public function hasMethod(ClassReflection $classReflection, string $methodName): bool
 	{
-		if (!isset($this->methods[$classReflection->getName()])) {
-			$this->methods[$classReflection->getName()] = $this->createMethods($classReflection, $classReflection);
-		}
-
-		return isset($this->methods[$classReflection->getName()][$methodName]);
+		return $this->findMethod($classReflection, $methodName) !== null;
 	}
 
 	public function getMethod(ClassReflection $classReflection, string $methodName): MethodReflection
 	{
-		return $this->methods[$classReflection->getName()][$methodName];
+		$method = $this->findMethod($classReflection, $methodName);
+
+		if ($method === null) {
+			throw new \InvalidArgumentException(sprintf('Method %s::%s doesn\'t exist', $classReflection->getName(), $methodName));
+		}
+
+		return $method;
+	}
+
+	/**
+	 * @param \PHPStan\Reflection\ClassReflection $classReflection
+	 * @param string $methodName
+	 * @return \PHPStan\Reflection\MethodReflection|null
+	 */
+	private function findMethod(ClassReflection $classReflection, string $methodName)
+	{
+		$className = $classReflection->getName();
+
+		if (!array_key_exists($className, $this->methods)) {
+			$this->methods[$className] = $this->createMethods($classReflection, $classReflection);
+		}
+
+		if (array_key_exists($methodName, $this->methods[$className])) {
+			return $this->methods[$className][$methodName];
+		}
+
+		$lowercasedMethodName = strtolower($methodName);
+		foreach ($this->methods[$className] as $currentMethodName => $currentMethod) {
+			if ($lowercasedMethodName === strtolower($currentMethodName)) {
+				$this->methods[$className][$methodName] = $currentMethod;
+				return $currentMethod;
+			}
+		}
+
+		return null;
 	}
 
 	/**

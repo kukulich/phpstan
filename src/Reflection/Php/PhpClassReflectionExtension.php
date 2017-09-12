@@ -120,18 +120,46 @@ class PhpClassReflectionExtension
 
 	public function hasMethod(ClassReflection $classReflection, string $methodName): bool
 	{
-		return $classReflection->hasMethod($methodName);
+		return $this->findMethod($classReflection, $methodName) !== null;
 	}
 
 	public function getMethod(ClassReflection $classReflection, string $methodName): MethodReflection
 	{
-		if (!isset($this->methods[$classReflection->getName()])) {
-			$this->methods[$classReflection->getName()] = $this->createMethods($classReflection);
+		$method = $this->findMethod($classReflection, $methodName);
+
+		if ($method === null) {
+			throw new \InvalidArgumentException(sprintf('Method %s::%s doesn\'t exist', $classReflection->getName(), $methodName));
 		}
 
-		$nativeMethodReflection = $classReflection->getMethod($methodName);
+		return $method;
+	}
 
-		return $this->methods[$classReflection->getName()][$nativeMethodReflection->getName()];
+	/**
+	 * @param \PHPStan\Reflection\ClassReflection $classReflection
+	 * @param string $methodName
+	 * @return \PHPStan\Reflection\MethodReflection|null
+	 */
+	private function findMethod(ClassReflection $classReflection, string $methodName)
+	{
+		$className = $classReflection->getName();
+
+		if (!array_key_exists($className, $this->methods)) {
+			$this->methods[$className] = $this->createMethods($classReflection);
+		}
+
+		if (array_key_exists($methodName, $this->methods[$className])) {
+			return $this->methods[$className][$methodName];
+		}
+
+		$lowercasedMethodName = strtolower($methodName);
+		foreach ($this->methods[$className] as $currentMethodName => $currentMethod) {
+			if ($lowercasedMethodName === strtolower($currentMethodName)) {
+				$this->methods[$className][$methodName] = $currentMethod;
+				return $currentMethod;
+			}
+		}
+
+		return null;
 	}
 
 	/**
@@ -188,6 +216,13 @@ class PhpClassReflectionExtension
 				$phpDocParameterTypes,
 				$phpDocReturnType
 			);
+		}
+
+		foreach ($classReflection->getTraits() as $traitReflection) {
+			foreach ($traitReflection->getTraitAliases() as $methodNameAlias => $methodInfo) {
+				list(, $methodName) = explode('::', $methodInfo);
+				$methods[$methodNameAlias] = $methods[$methodName];
+			}
 		}
 
 		return $methods;
