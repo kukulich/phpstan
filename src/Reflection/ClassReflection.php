@@ -23,6 +23,9 @@ class ClassReflection
 	/** @var \ReflectionClass */
 	private $reflection;
 
+	/** @var \PHPStan\Reflection\ClassReflection|false|null */
+	private $parentClass;
+
 	/** @var \PHPStan\Reflection\MethodReflection[] */
 	private $methods = [];
 
@@ -52,11 +55,12 @@ class ClassReflection
 	 */
 	public function getParentClass()
 	{
-		if ($this->reflection->getParentClass() === false) {
-			return false;
+		if ($this->parentClass === null) {
+			$parentReflection = $this->reflection->getParentClass();
+			$this->parentClass = $parentReflection !== false ? $this->broker->getClass($parentReflection->getName()) : false;
 		}
 
-		return $this->broker->getClass($this->reflection->getParentClass()->getName());
+		return $this->parentClass;
 	}
 
 	public function getName(): string
