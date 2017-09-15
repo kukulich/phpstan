@@ -6,10 +6,19 @@ use PhpParser\Node;
 use PhpParser\Node\Name;
 use PhpParser\Node\Stmt\ClassMethod;
 use PHPStan\Analyser\Scope;
+use PHPStan\Broker\Broker;
 use PHPStan\Reflection\ClassReflection;
 
 class RequireParentConstructCallRule implements \PHPStan\Rules\Rule
 {
+
+	/** @var \PHPStan\Broker\Broker */
+	private $broker;
+
+	public function __construct(Broker $broker)
+	{
+		$this->broker = $broker;
+	}
 
 	public function getNodeType(): string
 	{
@@ -102,24 +111,19 @@ class RequireParentConstructCallRule implements \PHPStan\Rules\Rule
 	 */
 	private function getParentConstructorClass(ClassReflection $classReflection)
 	{
-		while ($classReflection->getParentClass() !== false) {
-			$constructor = $classReflection->getParentClass()->hasMethod('__construct') ? $classReflection->getParentClass()->getMethod('__construct') : null;
-			$constructorWithClassName = $classReflection->getParentClass()->hasMethod($classReflection->getParentClass()->getName()) ? $classReflection->getParentClass()->getMethod($classReflection->getParentClass()->getName()) : null;
-			if (
-				(
-					$constructor !== null
-					&& $constructor->getDeclaringClass()->getName() === $classReflection->getParentClass()->getName()
-					&& !$constructor->isAbstract()
-				) || (
-					$constructorWithClassName !== null
-					&& $constructorWithClassName->getDeclaringClass()->getName() === $classReflection->getParentClass()->getName()
-					&& !$constructorWithClassName->isAbstract()
-				)
-			) {
-				return $classReflection->getParentClass();
+		$parentClass = $classReflection->getParentClass();
+		while ($parentClass !== false) {
+			$constructor = $parentClass->hasMethod('__construct') ? $parentClass->getMethod('__construct') : null;
+			if ($constructor !== null && !$constructor->isAbstract()) {
+				return $this->broker->getClass($constructor->getDeclaringClass()->getName());
 			}
 
-			$classReflection = $classReflection->getParentClass();
+			$constructorWithClassName = $parentClass->hasMethod($parentClass->getName()) ? $parentClass->getMethod($parentClass->getName()) : null;
+			if ($constructorWithClassName !== null && !$constructorWithClassName->isAbstract()) {
+				return $this->broker->getClass($constructorWithClassName->getDeclaringClass()->getName());
+			}
+
+			$parentClass = $parentClass->getParentClass();
 		}
 
 		return false;
