@@ -298,14 +298,15 @@ class ClassReflection
 
 	private function getTraitNames(): array
 	{
-		$class = $this->reflection;
-		$traitNames = $class->getTraitNames();
-		while ($class->getParentClass() !== false) {
-			$traitNames = array_values(array_unique(array_merge($traitNames, $class->getParentClass()->getTraitNames())));
-			$class = $class->getParentClass();
+		$traitNames = $this->reflection->getTraitNames();
+
+		$parentClass = $this->reflection->getParentClass();
+		while ($parentClass !== false) {
+			$traitNames = array_merge($traitNames, $parentClass->getTraitNames());
+			$parentClass = $parentClass->getParentClass();
 		}
 
-		return $traitNames;
+		return array_values(array_unique($traitNames));
 	}
 
 	/**
