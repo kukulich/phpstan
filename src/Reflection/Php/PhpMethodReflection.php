@@ -107,43 +107,7 @@ class PhpMethodReflection implements MethodReflection
 
 	public function getName(): string
 	{
-		$name = $this->reflection->getName();
-		$lowercaseName = strtolower($name);
-		if ($lowercaseName === $name) {
-			// fix for https://bugs.php.net/bug.php?id=74939
-			foreach ($this->getDeclaringClass()->getTraitAliases() as $traitTarget) {
-				$correctName = $this->getMethodNameWithCorrectCase($name, $traitTarget);
-				if ($correctName !== null) {
-					$name = $correctName;
-					break;
-				}
-			}
-		}
-
-		return $name;
-	}
-
-	/**
-	 * @param string $lowercaseMethodName
-	 * @param string $traitTarget
-	 * @return string|null
-	 */
-	private function getMethodNameWithCorrectCase(string $lowercaseMethodName, string $traitTarget)
-	{
-		list ($trait, $method) = explode('::', $traitTarget);
-		$traitReflection = $this->broker->getClass($trait);
-		foreach ($traitReflection->getTraitAliases() as $methodAlias => $traitTarget) {
-			if ($lowercaseMethodName === strtolower($methodAlias)) {
-				return $methodAlias;
-			}
-
-			$correctName = $this->getMethodNameWithCorrectCase($lowercaseMethodName, $traitTarget);
-			if ($correctName !== null) {
-				return $correctName;
-			}
-		}
-
-		return null;
+		return $this->reflection->getName();
 	}
 
 	/**
