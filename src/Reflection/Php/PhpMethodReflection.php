@@ -286,68 +286,26 @@ class PhpMethodReflection implements MethodReflection
 			return true;
 		}
 
-		if (!$isNativelyVariadic && !$this->declaringClass->isInternal()) {
-			$key = sprintf('variadic-method-%s-%s-v0', $this->declaringClass->getName(), $this->reflection->getName());
-			$cachedResult = $this->cache->load($key);
-			if ($cachedResult === null) {
-				/** @var string $fileName */
-				$fileName = $this->declaringClass->getFileName();
-				$nodes = $this->parser->parse(file_get_contents($fileName));
-				$result = $this->callsFuncGetArgs($nodes);
-				$this->cache->save($key, $result);
-				return $result;
-			}
+		if ($isNativelyVariadic || $this->reflection->isInternal()) {
+			return $isNativelyVariadic;
+		}
 
+		$key = sprintf('variadic-method-%s-%s-v0', $this->declaringClass->getName(), $this->reflection->getName());
+		$cachedResult = $this->cache->load($key);
+		if ($cachedResult !== null) {
 			return $cachedResult;
 		}
 
-		return $isNativelyVariadic;
+		/** @var \PhpParser\Node\Stmt\ClassMethod $node */
+		$node = $this->reflection->getAst();
+		$result = $this->callsFuncGetArgs($node);
+		$this->cache->save($key, $result);
+		return $result;
 	}
 
-	/**
-	 * @param mixed $nodes
-	 * @return bool
-	 */
-	private function callsFuncGetArgs($nodes): bool
+	private function callsFuncGetArgs(ClassMethod $node): bool
 	{
-		foreach ($nodes as $node) {
-			if (is_array($node)) {
-				if ($this->callsFuncGetArgs($node)) {
-					return true;
-				}
-			}
-
-			if (!($node instanceof \PhpParser\Node)) {
-				continue;
-			}
-
-			if (
-				$node instanceof \PhpParser\Node\Stmt\ClassLike
-				&& isset($node->namespacedName)
-				&& $this->declaringClass->getName() !== (string) $node->namespacedName
-			) {
-				continue;
-			}
-
-			if ($node instanceof ClassMethod) {
-				if ($node->getStmts() === null) {
-					continue; // interface
-				}
-
-				$methodName = $node->name;
-				if ($methodName === $this->reflection->getName()) {
-					return $this->functionCallStatementFinder->findFunctionCallInStatements(ParametersAcceptor::VARIADIC_FUNCTIONS, $node->getStmts()) !== null;
-				}
-
-				continue;
-			}
-
-			if ($this->callsFuncGetArgs($node)) {
-				return true;
-			}
-		}
-
-		return false;
+		return $this->functionCallStatementFinder->findFunctionCallInStatements(ParametersAcceptor::VARIADIC_FUNCTIONS, $node->getStmts()) !== null;
 	}
 
 	public function isPrivate(): bool
