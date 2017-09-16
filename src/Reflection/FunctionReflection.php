@@ -189,7 +189,7 @@ class FunctionReflection implements ParametersAcceptor
 			$key = sprintf('variadic-function-%s-v0', $this->reflection->getName());
 			$cachedResult = $this->cache->load($key);
 			if ($cachedResult === null) {
-				$nodes = $this->parser->parseFile($this->reflection->getFileName());
+				$nodes = $this->parser->parse(file_get_contents($this->reflection->getFileName()));
 				$result = $this->callsFuncGetArgs($nodes);
 				$this->cache->save($key, $result);
 				return $result;

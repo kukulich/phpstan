@@ -24,19 +24,10 @@ class DirectParser implements Parser
 	}
 
 	/**
-	 * @param string $file path to a file to parse
-	 * @return \PhpParser\Node[]
-	 */
-	public function parseFile(string $file): array
-	{
-		return $this->parseString(file_get_contents($file));
-	}
-
-	/**
 	 * @param string $sourceCode
 	 * @return \PhpParser\Node[]
 	 */
-	public function parseString(string $sourceCode): array
+	public function parse(string $sourceCode): array
 	{
 		$nodes = $this->parser->parse($sourceCode);
 		if ($nodes === null) {

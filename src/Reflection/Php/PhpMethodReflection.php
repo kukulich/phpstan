@@ -328,7 +328,7 @@ class PhpMethodReflection implements MethodReflection
 			if ($cachedResult === null) {
 				/** @var string $fileName */
 				$fileName = $this->declaringClass->getFileName();
-				$nodes = $this->parser->parseFile($fileName);
+				$nodes = $this->parser->parse(file_get_contents($fileName));
 				$result = $this->callsFuncGetArgs($nodes);
 				$this->cache->save($key, $result);
 				return $result;

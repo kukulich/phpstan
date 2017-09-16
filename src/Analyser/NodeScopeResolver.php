@@ -1303,7 +1303,7 @@ class NodeScopeResolver
 			if (!isset($this->analysedFiles[$normalizedFileName])) {
 				return;
 			}
-			$parserNodes = $this->parser->parseFile($normalizedFileName);
+			$parserNodes = $this->parser->parse(file_get_contents($normalizedFileName));
 			$className = sprintf('class %s', $classScope->getClassReflection()->getDisplayName());
 			if ($classScope->getClassReflection()->isAnonymous()) {
 				$className = 'anonymous class';

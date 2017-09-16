@@ -131,7 +131,7 @@ class Analyser
 			try {
 				$fileErrors = [];
 				$this->nodeScopeResolver->processNodes(
-					$this->parser->parseFile($file),
+					$this->parser->parse(file_get_contents($file)),
 					new Scope($this->broker, $this->printer, $this->typeSpecifier, $file),
 					function (\PhpParser\Node $node, Scope $scope) use (&$fileErrors) {
 						if ($node instanceof \PhpParser\Node\Stmt\Trait_) {

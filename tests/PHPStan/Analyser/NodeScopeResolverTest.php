@@ -3651,7 +3651,7 @@ class NodeScopeResolverTest extends \PHPStan\TestCase
 			$printedNode = $printer->prettyPrint([$node]);
 			if ($printedNode === $evaluatedPointExpression) {
 				/** @var \PhpParser\Node\Expr $expressionNode */
-				$expressionNode = $this->getParser()->parseString(sprintf('<?php %s;', $expression))[0];
+				$expressionNode = $this->getParser()->parse(sprintf('<?php %s;', $expression))[0];
 				$type = $scope->getType($expressionNode);
 				$this->assertTypeDescribe(
 					$description,
@@ -3681,7 +3681,7 @@ class NodeScopeResolverTest extends \PHPStan\TestCase
 			]
 		);
 		$resolver->processNodes(
-			$this->getParser()->parseFile($file),
+			$this->getParser()->parse(file_get_contents($file)),
 			new Scope(
 				$this->createBroker($dynamicMethodReturnTypeExtensions, $dynamicStaticMethodReturnTypeExtensions),
 				$printer,

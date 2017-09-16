@@ -68,7 +68,7 @@ class FileTypeMapper
 		$uses = [];
 		$nameScope = null;
 		$this->processNodes(
-			$this->parser->parseFile($fileName),
+			$this->parser->parse(file_get_contents($fileName)),
 			function (\PhpParser\Node $node) use ($patterns, &$typeMap, &$lastClass, &$namespace, &$uses, &$nameScope) {
 				if ($node instanceof Node\Stmt\ClassLike) {
 					$lastClass = $node;
