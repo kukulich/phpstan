@@ -24,12 +24,14 @@ class DirectParser implements Parser
 	}
 
 	/**
+	 * @phpcsSuppress SlevomatCodingStandard.TypeHints.TypeHintDeclaration.MissingParameterTypeHint
 	 * @param string $sourceCode
+	 * @param \PhpParser\ErrorHandler|null $errorHandler
 	 * @return \PhpParser\Node[]
 	 */
-	public function parse(string $sourceCode): array
+	public function parse($sourceCode, \PhpParser\ErrorHandler $errorHandler = null): array
 	{
-		$nodes = $this->parser->parse($sourceCode);
+		$nodes = $this->parser->parse($sourceCode, $errorHandler);
 		if ($nodes === null) {
 			throw new \PHPStan\ShouldNotHappenException();
 		}

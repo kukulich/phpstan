@@ -17,13 +17,15 @@ class CachedParser implements Parser
 	}
 
 	/**
+	 * @phpcsSuppress SlevomatCodingStandard.TypeHints.TypeHintDeclaration.MissingParameterTypeHint
 	 * @param string $sourceCode
+	 * @param \PhpParser\ErrorHandler|null $errorHandler
 	 * @return \PhpParser\Node[]
 	 */
-	public function parse(string $sourceCode): array
+	public function parse($sourceCode, \PhpParser\ErrorHandler $errorHandler = null): array
 	{
 		if (!isset($this->cachedNodesByString[$sourceCode])) {
-			$this->cachedNodesByString[$sourceCode] = $this->originalParser->parse($sourceCode);
+			$this->cachedNodesByString[$sourceCode] = $this->originalParser->parse($sourceCode, $errorHandler);
 		}
 
 		return $this->cachedNodesByString[$sourceCode];

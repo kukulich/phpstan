@@ -39,9 +39,6 @@ services:
 		class: PhpParser\NodeVisitor\NameResolver
 
 	-
-		class: PhpParser\Parser\Php7
-
-	-
 		class: PhpParser\PrettyPrinter\Standard
 
 	-
@@ -164,6 +161,12 @@ services:
 
 	directParser:
 		class: PHPStan\Parser\DirectParser
+		arguments:
+			parser: @phpParser
+		autowired: no
+
+	phpParser:
+		class: PhpParser\Parser\Php7
 		autowired: no
 
 	registry:
