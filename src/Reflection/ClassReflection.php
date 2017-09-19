@@ -299,7 +299,7 @@ class ClassReflection
 		return in_array($traitName, $this->getTraitNames(), true);
 	}
 
-	private function getTraitNames(): array
+	public function getTraitNames(): array
 	{
 		$traitNames = $this->reflection->getTraitNames();
 
