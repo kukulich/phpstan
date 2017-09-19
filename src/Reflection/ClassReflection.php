@@ -349,4 +349,13 @@ class ClassReflection
 		return $this->reflection->getDocComment();
 	}
 
+	/**
+	 * @deprecated
+	 * @return \Roave\BetterReflection\Reflection\ReflectionClass
+	 */
+	public function getNativeReflection(): \Roave\BetterReflection\Reflection\ReflectionClass
+	{
+		return $this->reflection;
+	}
+
 }
